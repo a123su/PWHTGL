@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陪玩信息政务管理后台</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft YaHei}
+        body{background:#ecf2fa;}
+        .login-box{
+            max-width:450px;margin:80px auto;background:#fff;
+            padding:35px;border-radius:8px;box-shadow:0 2px 12px #c9d8ee;
+        }
+        .login-title{
+            text-align:center;font-size:22px;color:#165DFF;margin-bottom:30px;
+        }
+        .input-item{margin-bottom:20px;}
+        label{display:block;margin-bottom:6px;color:#333;}
+        input{
+            width:100%;padding:13px;border:1px #bcd0ee solid;border-radius:4px;
+        }
+        .login-btn{
+            width:100%;padding:14px;background:#165DFF;color:white;border:none;border-radius:4px;font-size:16px;
+        }
+
+        .admin-main{display:none;padding:20px;max-width:1200px;margin:0 auto;}
+        .header-bar{
+            background:#165DFF;color:white;padding:18px 20px;border-radius:6px 6px 0 0;
+            font-size:20px;font-weight:500;
+        }
+        .search-area{
+            background:#fff;padding:25px;margin-top:12px;border-radius:6px;
+        }
+        .search-row{display:flex;gap:15px;flex-wrap:wrap;}
+        .search-btn{
+            padding:12px 26px;background:#165DFF;color:#fff;border:none;border-radius:4px;
+        }
+        .reset-btn{
+            padding:12px 26px;background:#86a8e7;color:#fff;border:none;border-radius:4px;
+        }
+        table{
+            width:100%;margin-top:15px;background:#fff;border-collapse:collapse;
+        }
+        th{
+            background:#165DFF;color:white;padding:14px;border:1px solid #ddd;
+        }
+        td{
+            padding:12px;border:1px #e1e7f3 solid;text-align:center;
+        }
+        .delete-btn {
+            background: #f53f3f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="login-box" id="loginPanel">
+    <h3 class="login-title">陪玩信息后台登录</h3>
+    <div class="input-item">
+        <label>管理员账号</label>
+        <input type="text" id="adminUser" placeholder="输入账号">
+    </div>
+    <div class="input-item">
+        <label>登录密码</label>
+        <input type="password" id="adminPwd" placeholder="输入密码">
+    </div>
+    <button class="login-btn" onclick="adminLogin()">进入管理后台</button>
+</div>
+
+<div class="admin-main" id="adminPage">
+    <div class="header-bar">XJ陪玩人员信息政务管理台账</div>
+    <div class="search-area">
+        <div class="search-row">
+            <input style="width:220px" type="text" id="queryName" placeholder="输入查询姓名">
+            <input style="width:260px" type="text" id="queryGame" placeholder="输入对应陪玩游戏">
+            <button class="search-btn" onclick="searchData()">条件检索</button>
+            <button class="reset-btn" onclick="loadAllData();clearInput()">重置查询</button>
+        </div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>编号</th>
+                <th>昵称姓名</th>
+                <th>性别</th>
+                <th>年龄</th>
+                <th>陪玩游戏</th>
+                <th>游戏段位</th>
+                <th>注册时间</th>
+                <th>操作管理</th>
+            </tr>
+        </thead>
+        <tbody id="dataTableBody"></tbody>
+    </table>
+</div>
+
+<script>
+const supabaseUrl = "https://uqcrhcpedhhnettbkucy.supabase.co";
+const supabaseKey = "sb_publishable_lFa1Lhow7R446gwtq9Zgkg_2TshYyVz";
+const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+const correctAccount = "苏先生";
+const correctPassword = "13579qetA";
+
+function adminLogin(){
+    let user = document.getElementById("adminUser").value;
+    let pwd = document.getElementById("adminPwd").value;
+    if(user === correctAccount && pwd === correctPassword){
+        document.getElementById("loginPanel").style.display = "none";
+        document.getElementById("adminPage").style.display = "block";
+        loadAllData();
+    }else{
+        alert("账号或者密码错误，请重新填写");
+    }
+}
+
+// 加载全部数据
+async function loadAllData(){
+    const {data} = await client.from("playmate_user").select("*").order("create_time",{asc:false});
+    renderTable(data);
+}
+
+// 姓名+游戏双条件查询
+async function searchData(){
+    let nameKey = document.getElementById("queryName").value;
+    let gameKey = document.getElementById("queryGame").value;
+    let query = client.from("playmate_user").select("*");
+    if(nameKey) query = query.ilike("username",`%${nameKey}%`);
+    if(gameKey) query = query.ilike("game_list",`%${gameKey}%`);
+    const {data} = await query;
+    renderTable(data);
+}
+
+// 渲染表格附带删除按钮
+function renderTable(list){
+    let html = "";
+    if(list.length === 0){
+        html = `<tr><td colspan="8">暂无匹配注册数据</td></tr>`;
+    }else{
+        list.forEach(item=>{
+            let time = new Date(item.create_time).toLocaleString();
+            html += `
+            <tr>
+                <td>${item.id}</td>
+                <td>${item.username}</td>
+                <td>${item.gender}</td>
+                <td>${item.age}</td>
+                <td>${item.game_list}</td>
+                <td>${item.game_rank}</td>
+                <td>${time}</td>
+                <td>
+                    <button class="delete-btn" onclick="deleteUser(${item.id})">删除记录</button>
+                </td>
+            </tr>`
+        })
+    }
+    document.getElementById("dataTableBody").innerHTML = html;
+}
+
+// 删除云端数据库对应数据
+async function deleteUser(userId){
+    const confirmDel = confirm("确认永久删除该条陪玩信息？删除后数据无法恢复");
+    if (!confirmDel) return;
+
+    const {error} = await client.from("playmate_user").delete().eq("id", userId);
+    if(error){
+        alert("删除失败：" + error.message);
+    }else{
+        alert("记录已永久删除");
+        loadAllData();
+    }
+}
+
+function clearInput(){
+    document.getElementById("queryName").value = "";
+    document.getElementById("queryGame").value = "";
+}
+</script>
+</body>
+</html>
