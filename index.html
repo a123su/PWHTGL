@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XJ陪玩官方注册平台</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui;
+        }
+        body {
+            background: #f3f4f6;
+            color: #2d2d2d;
+            padding: 30px 15px;
+        }
+        .container {
+            max-width: 520px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 18px rgba(80,80,80,0.08);
+        }
+        .title {
+            text-align: center;
+            font-size: 26px;
+            color: #222222;
+            margin-bottom: 35px;
+            font-weight: 500;
+        }
+        .form-item {
+            margin-bottom: 22px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #444;
+            font-size: 15px;
+        }
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 15px;
+            background: #f9fafb;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #3a3a3a;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+        .submit-btn:hover {
+            background-color: #1f1f1f;
+        }
+        .tip-text {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 class="title">XJ陪玩账号注册</h2>
+    <form id="registerForm">
+        <div class="form-item">
+            <label>姓名昵称</label>
+            <input type="text" id="username" required placeholder="输入你的昵称">
+        </div>
+        <div class="form-item">
+            <label>性别</label>
+            <select id="gender" required>
+                <option value="">请选择性别</option>
+                <option value="男">男</option>
+                <option value="女">女</option>
+            </select>
+        </div>
+        <div class="form-item">
+            <label>年龄</label>
+            <input type="number" id="age" required placeholder="必须年满16周岁">
+        </div>
+        <div class="form-item">
+            <label>主营陪玩游戏</label>
+            <input type="text" id="gameList" required placeholder="例如：王者荣耀、三角洲行动">
+        </div>
+        <div class="form-item">
+            <label>当前游戏段位</label>
+            <input type="text" id="gameRank" required placeholder="填写游戏具体段位">
+        </div>
+        <button class="submit-btn" type="submit">提交注册 同步云端数据库</button>
+    </form>
+    <p class="tip-text">所有注册数据实时云端储存，后台管理员可即时查看</p>
+</div>
+
+<script>
+// 固定你的Supabase参数，无修改
+const supabaseUrl = "https://uqcrhcpedhhnettbkucy.supabase.co";
+const supabaseKey = "sb_publishable_lFa1Lhow7R446gwtq9Zgkg_2TshYyVz";
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    // 获取输入并去除首尾空格
+    const name = document.getElementById('username').value.trim();
+    const sex = document.getElementById('gender').value;
+    const userAge = Number(document.getElementById('age').value);
+    const game = document.getElementById('gameList').value.trim();
+    const rank = document.getElementById('gameRank').value.trim();
+
+    // 空值校验
+    if (!name || !sex || !game || !rank) {
+        alert("请完整填写全部注册信息！");
+        return;
+    }
+    // 年龄校验
+    if (isNaN(userAge) || userAge < 16) {
+        alert("注册限制：未满16周岁无法注册陪玩账号");
+        return;
+    }
+
+    try {
+        // 插入数据到云端
+        const { error } = await supabase.from('playmate_user').insert([{
+            username: name,
+            gender: sex,
+            age: userAge,
+            game_list: game,
+            game_rank: rank
+        }]);
+        if (error) throw error;
+        // 成功弹窗
+        alert('注册成功！信息已上传云端，后台实时接收数据');
+        document.getElementById('registerForm').reset();
+    } catch (err) {
+        // 失败弹窗打印详细错误
+        alert(`注册失败：${err.message}`);
+        console.error("错误详情：", err);
+    }
+})
+</script>
+</body>
+</html>
